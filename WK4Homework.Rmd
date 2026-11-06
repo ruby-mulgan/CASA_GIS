@@ -1,0 +1,86 @@
+---
+title: "WK4 HOMEWORK"
+output: html_document
+date: "2026-11-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(janitor)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(sf)
+library(countrycode)
+library(tmap)
+
+```
+
+#Bring in csv
+```{r}
+genindex<-read_csv(here::here("WK4","HomeworkData","hdr-data (1).csv"),locale = locale(encoding = "latin1"),
+                       na = " ")
+colnames(genindex)
+```
+
+#Filter for 2010 then isolate relevant variables, clean column names, rename value with its year for when data is later combined
+#Inspect result
+
+```{r}
+data2010 <- genindex %>%
+  filter(year == 2010)%>%
+  select(countryIsoCode, value)%>%
+  clean_names() %>%
+  distinct()%>%
+  rename(value_2010 = value)%>%
+  filter(!is.na(value_2010))
+
+str(data2010)
+summary(data2010)
+```
+#Same for 2019
+```{r}
+data2019 <- genindex %>%
+  filter(year == 2019)%>%
+  select(countryIsoCode, value)%>%
+  clean_names() %>%
+  distinct() %>%
+  rename(value_2019 = value)%>%
+  filter(!is.na(value_2019))
+
+str(data2019)
+```
+
+```{r} 
+combined_data<- data2010 %>%
+  left_join(.,
+            data2019
+          ,by = "country_iso_code")
+combined_data <- combined_data%>%
+  mutate(difference = value_2010 - value_2019)%>%
+  mutate(iso = countrycode(country_iso_code,
+                            origin = "iso3c",
+                            destination = "iso2c"))
+
+head(combined_data)
+```
+
+```{r}
+world <- st_read(here::here("WK4","HomeworkData","World_Countries_(Generalized)_-7542350475356456390","World_Countries_Generalized.shp"))
+colnames(world)
+```
+```{r}
+joined_data <- world %>%
+  clean_names()%>%
+  left_join( .,
+             combined_data,
+             by = "iso" )
+```
+```{r}
+tm_shape(joined_data)+
+  tm_polygons(fill="difference")
+```
+
+
