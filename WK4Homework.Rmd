@@ -79,8 +79,11 @@ joined_data <- world %>%
              by = "iso" )
 ```
 ```{r}
-tm_shape(joined_data)+
-  tm_polygons(fill="difference")
+tm_shape(joined_data) +
+  tm_polygons(
+    fill = "difference",
+    fill.legend = tm_legend(title = "GII (2010 − 2019)\nNegative = increase")
+  )
 ```
 
 
